@@ -60,8 +60,20 @@ const path = require("path");
       },
     };
 
-    const octokit = new github.GitHub(accessToken);
-    await octokit.checks.create(createCheckRequest);
+    if(accessToken) {
+      const octokit = new github.GitHub(accessToken);
+      await octokit.checks.create(createCheckRequest);
+    } else {
+      if(annotations.length > 1) {
+        core.setFailed(annotations.shift().message);
+        for (const annotation of annotations) {
+          core.error(annotation.message);
+        }
+      } else if (annotations.length == 1) {
+        core.debug(annotations.shift().message)
+      }
+    }
+
   } catch (error) {
     core.setFailed(error.message);
   }

@@ -6,7 +6,6 @@ branding:
 inputs:
   access-token:
     description: "github token"
-    required: true
   path:
     description: "glob to junit xml files"
     required: true

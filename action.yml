@@ -1,5 +1,5 @@
 name: "Junit Report Annotations Fork Frendly"
-description: "Create an annotation of the test run summary when failure occures, and also list failed tests as seporate annotations.  Optional github access token to be fork frendly"
+description: "Create an annotation of the test run summary, and also list failed tests as seperate annotations."
 branding:
   icon: "box"
   color: "green"

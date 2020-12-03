@@ -3,10 +3,11 @@ Create an annotation of the build information and also list first n failed tests
 
 ## Example
 ```
-    - uses: ashley-taylor/junit-report-annotations-action@1.3
+    - uses: KyleAure/junit-report-annotations-action@1.5
       if: always()
       with:
-        access-token: ${{ secrets.GITHUB_TOKEN }}
+        name: "unit tests"
+        path: "**/TEST-*.xml"
 ``` 
    
 A demonstration is available here

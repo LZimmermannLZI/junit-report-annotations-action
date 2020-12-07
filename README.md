@@ -5,30 +5,49 @@ However, if you do provide a token more detailed information will be output with
 
 ## Configuration elements
 access-token:
+
   description: "github token"
+  
   required: false
+  
 path:
+
   description: "Glob to junit xml files"
+ 
   required: true
+  
   default: "**/TEST-*.xml"
+  
 includeSummary:
+
   description: "Include a summary annotation"
+  
   required: true
+  
   default: true
+  
 numFailures:
+
   description: "Max number of failed tests to annotate"
+  
   require: true
+  
   default: 10
+  
 debug:
   description: "Log debug messages"
+  
   require: true
+  
   default: false
+  
 name:
   description: "Name of the check in the github actions UI"
+  
   require: true
+  
   default: "Junit Results"
-
-
+  
 ## Action Examples
 ```
     #Without access token

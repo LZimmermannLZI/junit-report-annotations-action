@@ -75,18 +75,13 @@ debug = false;
       await octokit.checks.create(createCheckRequest);
     } else {
       log("Access token not detected.  Writing annotations to base check.");
-      //If includeSummary = true than the first annotation is that summary
-      // pull it off before we handle the rest of the annotations
-      if(includeSummary && conclusion === 'failure' ) {
+      
+      if (includeSummary && conclusion === 'failure') {
         core.setFailed(annotations.shift().message);
-      } else if(includeSummary && conclusion === 'success') { //just the summary
-        console.log("Test summary requested, but no tests failed.  Logging summary in debug message.")
-        log(annotations.shift().message);
-      } else if (conclusion === 'failure') {
-        core.setFailed(`${name} had failures.`)
       }
+
       for (const annotation of annotations) {
-        core.error(annotation.message);
+        core.setFailed(annotation.message);
       }
     }
   } catch (error) {

@@ -13,7 +13,7 @@ inputs:
   includeSummary:
     description: "include summary annotation"
     required: true
-    default: true
+    default: false
   numFailures:
     description: "max number of failed tests to include"
     require: true

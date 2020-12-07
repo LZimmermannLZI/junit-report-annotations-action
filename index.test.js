@@ -207,11 +207,11 @@ describe('readTestSuites', () => {
   });
 });
 
-describe('TestSummary', () => {
+describe('JunitDAO', () => {
   let testSummary;
 
   beforeEach(() => {
-    testSummary = new index.TestSummary();
+    testSummary = new index.JunitDAO();
   });
 
   describe('handleTestSuite', () => {

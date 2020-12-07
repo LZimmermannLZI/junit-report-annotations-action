@@ -5,8 +5,12 @@ const parser = require("xml2js");
 const fs = require("fs");
 const path = require("path");
 
+debug = false;
+
+//##### Main Method ######
 (async () => {
   try {
+    debug = core.getInput("debug");
     const inputPath = core.getInput("path");
     const includeSummary = core.getInput("includeSummary");
     const numFailures = core.getInput("numFailures");
@@ -16,36 +20,41 @@ const path = require("path");
       followSymbolicLinks: false,
     });
 
-    let testSummary = new TestSummary();
-    testSummary.maxNumFailures = numFailures;
+    let junitObj = new JunitDAO();
+    junitObj.maxNumFailures = numFailures;
 
     for await (const file of globber.globGenerator()) {
       const testsuites = await readTestSuites(file);
       for await (const testsuite of testsuites) {
-        await testSummary.handleTestSuite(testsuite, file);
+        await junitObj.handleTestSuite(testsuite, file);
       }
     }
 
-    const annotation_level = testSummary.isFailedOrErrored() ? "failure" : "notice";
-    const annotation = {
+    const annotation_level = junitObj.isFailedOrErrored() ? "failure" : "notice";
+    const summaryAnno = {
       path: "test",
       start_line: 0,
       end_line: 0,
       start_column: 0,
       end_column: 0,
       annotation_level,
-      message: testSummary.toFormattedMessage(),
+      message: junitObj.toSummaryMessage(),
     };
 
-    const conclusion = testSummary.annotations.length === 0 ? "success" : "failure";
-    testSummary.annotations = [annotation, ...testSummary.annotations];
-
+    const conclusion = junitObj.annotations.length === 0 ? "success" : "failure";
+    if(includeSummary) {
+      junitObj.annotations = [summaryAnno, ...junitObj.annotations];
+    } else {
+      log("Ignoring summary annoation and only creating failing annoations");
+      junitObj.annotations = [...junitObj.annotations];
+    }
+    
     const pullRequest = github.context.payload.pull_request;
     const link = (pullRequest && pullRequest.html_url) || github.context.ref;
     const status = "completed";
     const head_sha =
       (pullRequest && pullRequest.head.sha) || github.context.sha;
-    const annotations = testSummary.annotations;
+    const annotations = junitObj.annotations;
 
     const createCheckRequest = {
       ...github.context.repo,
@@ -55,31 +64,39 @@ const path = require("path");
       conclusion,
       output: {
         title: name,
-        summary: testSummary.toFormattedMessage(),
+        summary: junitObj.toSummaryMessage(),
         annotations,
       },
     };
 
     if(accessToken) {
+      log("Access token detected. Attempting to create a new check field with annotations");
       const octokit = new github.GitHub(accessToken);
       await octokit.checks.create(createCheckRequest);
     } else {
-      if(annotations.length > 1) {
+      log("Access token not detected.  Writing annotations to base check.");
+      //If includeSummary = true than the first annotation is that summary
+      // pull it off before we handle the rest of the annotations
+      if(includeSummary && conclusion === 'failure' ) {
         core.setFailed(annotations.shift().message);
-        for (const annotation of annotations) {
-          core.error(annotation.message);
-        }
-      } else if (annotations.length == 1) {
-        core.debug(annotations.shift().message)
+      } else if(includeSummary && conclusion === 'success') { //just the summary
+        console.log("Test summary requested, but no tests failed.  Logging summary in debug message.")
+        log(annotations.shift().message);
+      } else if (conclusion === 'failure') {
+        core.setFailed(`${name} had failures.`)
+      }
+      for (const annotation of annotations) {
+        core.error(annotation.message);
       }
     }
-
   } catch (error) {
     core.setFailed(error.message);
   }
 })();
 
-class TestSummary {
+
+//#### Class that represents the TEST-*.xml file
+class JunitDAO {
 
   maxNumFailures = -1;
 
@@ -112,6 +129,7 @@ class TestSummary {
     }
 
     if (this.maxNumFailures !== -1 && this.annotations.length >= this.maxNumFailures) {
+      log("Max number of failures reached. Suppressing further annotations.");
       return;
     }
 
@@ -125,7 +143,7 @@ class TestSummary {
       end_column: 0,
       annotation_level: "failure",
       title: testcase.$.name,
-      message: TestSummary.formatFailureMessage(testcase),
+      message: JunitDAO.formatFailureMessage(testcase),
       raw_details: testcase.failure[0]._ || 'No details'
     });
   }
@@ -143,7 +161,7 @@ class TestSummary {
     return this.numFailed > 0 || this.numErrored > 0;
   }
 
-  toFormattedMessage() {
+  toSummaryMessage() {
     return `Junit Results ran ${this.numTests} in ${this.testDuration} seconds ${this.numErrored} Errored, ${this.numFailed} Failed, ${this.numSkipped} Skipped`;
   }
 
@@ -254,6 +272,12 @@ async function findTestLocation(testReportFile, testcase) {
   return { filePath: bestFilePath, line };
 }
 
+async function log(message) {
+  if(debug) {
+    console.log(message);
+  }
+}
+
 module.exports.findTestLocation = findTestLocation;
 module.exports.readTestSuites = readTestSuites;
-module.exports.TestSummary = TestSummary;
+module.exports.JunitDAO = JunitDAO;

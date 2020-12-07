@@ -18,8 +18,12 @@ inputs:
     description: "max number of failed tests to include"
     require: true
     default: 10
+  debug:
+    description: "Log debug messages"
+    require: true
+    default: false
   name:
-    description: "Name of the Check in the github actions UI"
+    description: "Name of the check in the github actions UI"
     require: true
     default: "Junit Results"
 runs:

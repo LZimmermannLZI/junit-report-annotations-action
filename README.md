@@ -4,49 +4,29 @@ This actions is fork friendly as it does not require access to parent repository
 However, if you do provide a token more detailed information will be output within the annotations.
 
 ## Configuration elements
-access-token:
-
-  description: "github token"
-  
-  required: false
-  
-path:
-
-  description: "Glob to junit xml files"
- 
-  required: true
-  
-  default: "**/TEST-*.xml"
-  
-includeSummary:
-
-  description: "Include a summary annotation"
-  
-  required: true
-  
-  default: true
-  
-numFailures:
-
-  description: "Max number of failed tests to annotate"
-  
-  require: true
-  
-  default: 10
-  
-debug:
-  description: "Log debug messages"
-  
-  require: true
-  
-  default: false
-  
-name:
-  description: "Name of the check in the github actions UI"
-  
-  require: true
-  
-  default: "Junit Results"
+* access-token:
+  * description: "github token"
+  * required: false
+* path:
+  * description: "Glob to junit xml files"
+  * required: true
+  * default: "**/TEST-*.xml"
+* includeSummary:
+  * description: "Include a summary annotation"
+  * required: true
+  * default: true
+* numFailures:
+  * description: "Max number of failed tests to annotate"
+  * require: true
+  * default: 10
+* debug:
+  * description: "Log debug messages"
+  * require: true
+  * default: false
+* name:
+  * description: "Name of the check in the github actions UI"
+  * require: true
+  * default: "Junit Results"
   
 ## Action Examples
 ```

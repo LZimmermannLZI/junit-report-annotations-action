@@ -6,40 +6,66 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
-  unit-tests:
+  npm-tests:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
       - run: npm ci
       - run: npm test
-
-  # Run this action on itself. Even if there is no JUnit reports, the action should run silently without errors.
-
-  ubuntu-action-tests:
+  failure-tests:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
-      - uses: ./
+      - name: Test action
+        uses: ./
         with:
-          name: "unbuntu unit tests"
+          name: "failure tests"
           access-token: ${{ secrets.GITHUB_TOKEN }}
-          path: "**/TEST-*.xml"
-
-  ubuntu-action-tests-notoken:
+          path: "**/TEST-Failure.xml"
+          debug: true
+      - name: Assert success
+        if: failure()
+        run: |
+          echo "::error::failure-tests should have succeeded, and created a new check that failed with annotations. But instead failed";
+          exit 1;
+  failure-tests-notoken:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
-      - uses: ./
+      - name: Test action
+        uses: ./
         with:
-          name: "unbuntu unit tests"
-          path: "**/TEST-*.xml"
-
-  macos-action-tests:
-    runs-on: macos-latest
+          name: "failure tests no token"
+          path: "**/TEST-Failure.xml"
+          debug: true
+      - name: Assert failure
+        if: success()
+        run: |
+          echo "::error::failure-tests-notoken should have failed and reported annations on this step, but instead succeeded. But instead failed";
+          exit 1;
+  success-tests:
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
-      - uses: ./
+      - name: Test action
+        uses: ./
         with:
-          name: "macos unit tests"
+          name: "Success tests"
           access-token: ${{ secrets.GITHUB_TOKEN }}
-          path: "**/TEST-*.xml"
+          path: "**/TEST-Success.xml"
+          debug: true
+      - name: Assert success
+        if: failure()
+        run: |
+          echo "::error::success-tests should have succeeded, and created a new check that failed with annotations. But instead failed";
+          exit 1;
+  success-tests-notoken:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: Test action
+        uses: ./
+        with:
+          name: "Success tests no token"
+          path: "**/TEST-Success.xml"
+          debug: true

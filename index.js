@@ -113,12 +113,13 @@ class JunitDAO {
 
     if (testsuite.testcase) {
       for await (const testcase of testsuite.testcase) {
-        await this.handleTestCase(testcase, file);
+        await this.handleFailure(testcase, file);
+        await this.handleError(testcase, file);
       }
     }
   }
 
-  async handleTestCase(testcase, file) {
+  async handleFailure(testcase, file) {
     if (!testcase.failure) {
       return;
     }
@@ -143,12 +144,46 @@ class JunitDAO {
     });
   }
 
+  async handleError(testcase, file) {
+    if (!testcase.error) {
+      return;
+    }
+
+    if (this.maxNumFailures !== -1 && this.annotations.length >= this.maxNumFailures) {
+      log("Max number of failures reached. Suppressing further annotations.");
+      return;
+    }
+
+    const {filePath, line} = await module.exports.findTestLocation(file, testcase);
+
+    this.annotations.push({
+      path: filePath,
+      start_line: line,
+      end_line: line,
+      start_column: 0,
+      end_column: 0,
+      annotation_level: "failure",
+      title: testcase.$.name,
+      message: JunitDAO.formatErrorMessage(testcase),
+      raw_details: testcase.error[0]._ || 'No details'
+    });
+  }
+
   static formatFailureMessage(testcase) {
     const failure = testcase.failure[0];
     if (failure.$ && failure.$.message) {
-      return `Junit test ${testcase.$.name} failed ${failure.$.message}`;
+      return `Junit test ${testcase.$.name} failed : ${failure.$.message}`;
     } else {
       return `Junit test ${testcase.$.name} failed`;
+    }
+  }
+
+  static formatErrorMessage(testcase) {
+    const error = testcase.error[0];
+    if (error.$ && error.$.message) {
+      return `Junit test ${testcase.$.name} had an error : ${error.$.message}`;
+    } else {
+      return `Junit test ${testcase.$.name} had an error`;
     }
   }
 

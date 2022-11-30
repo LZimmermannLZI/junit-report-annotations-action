@@ -27,5 +27,5 @@ inputs:
     require: true
     default: "Junit Results"
 runs:
-  using: "node12"
+  using: "node16"
   main: "index.js"
